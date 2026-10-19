@@ -8,7 +8,7 @@ rishabhwm uses AeroSpace's default bindings. `⌥` is the Option key.
 
 | Keys | Action |
 |---|---|
-| `⌥h` `⌥j` `⌥k` `⌥l` | Focus the window left / down / up / right. At the edge of a display, focus jumps to the neighboring display. |
+| `⌥h` `⌥j` `⌥k` `⌥l` | Focus the window left / down / up / right. At the edge of a display, focus jumps to the neighboring display. Past the last display it wraps around to the opposite edge (turn off with `focus-wrap = false`). |
 | `⌥⇧h` `⌥⇧j` `⌥⇧k` `⌥⇧l` | Move the focused window. It swaps with a neighbor, steps into a neighboring column/row, or pops out of one. At the edge of a display it moves to the next display. |
 
 ### Workspaces
@@ -22,6 +22,15 @@ Workspace names are `1`–`9` and `A`–`Z` except `F` (used by fullscreen) and 
 | `⌥Tab` | Back and forth between the current and previous workspace. |
 | `⌥⇧Tab` | Move the current workspace to the next display. |
 
+### Displays
+
+| Keys | Action |
+|---|---|
+| `⌥[` / `⌥]` | Focus the display to the left / right (wraps around). |
+| `⌥⇧[` / `⌥⇧]` | Send the focused window to the display on the left / right (wraps around). Focus follows it; floating windows keep their relative spot, ⌥F windows stay fullscreen. |
+
+Pin a workspace to a display with `[monitors]` in the config (or the Settings window), e.g. Claude on the laptop screen. The main display (the one with the menu bar) starts on workspace `1`.
+
 ### Layout
 
 | Keys | Action |
@@ -30,6 +39,14 @@ Workspace names are `1`–`9` and `A`–`Z` except `F` (used by fullscreen) and 
 | `⌥,` | Accordion layout: windows stacked, each nearly full size, with a 30pt peek of its neighbors. Press again to flip orientation. |
 | `⌥-` / `⌥=` | Shrink / grow the focused window by 50pt along its container. |
 | `⌥F` | Make the focused window fill the display (rishabhwm's fullscreen; not macOS fullscreen). Press again to put it back. |
+
+#### How ⌥F fullscreen works
+
+The fullscreen window steps out of the tiling and covers the display. The other windows on the workspace keep tiling underneath it, so with three windows you get one fullscreen and two side by side behind it.
+
+- `⌥hjkl` cycles focus through the workspace's windows in order (wrapping). Nothing retiles: the focused window is raised on top, and going back to the fullscreen window brings it back over everything.
+- Only one window per workspace is fullscreen; `⌥F` on another window moves fullscreen to it.
+- `⌥F` again on the fullscreen window puts it back into its old slot.
 | `⌥⇧F` | Toggle floating: take the window out of tiling, or put it back. |
 | `⌥⇧;` | Enter service mode. |
 

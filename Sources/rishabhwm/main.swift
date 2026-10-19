@@ -43,8 +43,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
+/// Accessory apps show no menu bar, but key equivalents still go through the main menu:
+/// without an Edit menu, ⌘C / ⌘V / ⌘A / ⌘Z do nothing in the settings window's text fields.
+private func editMenu() -> NSMenu {
+    let edit = NSMenu(title: "Edit")
+    edit.addItem(withTitle: "Undo", action: Selector(("undo:")), keyEquivalent: "z")
+    edit.addItem(withTitle: "Redo", action: Selector(("redo:")), keyEquivalent: "Z")
+    edit.addItem(.separator())
+    edit.addItem(withTitle: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+    edit.addItem(withTitle: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+    edit.addItem(withTitle: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+    edit.addItem(withTitle: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+    edit.addItem(.separator())
+    edit.addItem(withTitle: "Close Window", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+    let item = NSMenuItem()
+    item.submenu = edit
+    let main = NSMenu()
+    main.addItem(item)
+    return main
+}
+
 let app = NSApplication.shared
 let delegate = AppDelegate()
 app.delegate = delegate
 app.setActivationPolicy(.accessory)
+app.mainMenu = editMenu()
 app.run()

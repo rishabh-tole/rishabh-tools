@@ -37,6 +37,25 @@ public struct Rect: Equatable, Hashable, CustomStringConvertible {
         px >= minX && px < maxX && py >= minY && py < maxY
     }
 
+    public func intersects(_ other: Rect) -> Bool {
+        minX < other.maxX && other.minX < maxX && minY < other.maxY && other.minY < maxY
+    }
+
+    /// Same relative spot in `target` as this rect has in `source`, shrunk to fit if needed.
+    public func moved(from source: Rect, to target: Rect) -> Rect {
+        let w = min(width, target.width)
+        let h = min(height, target.height)
+        let fx = source.width > width ? (x - source.x) / (source.width - width) : 0
+        let fy = source.height > height ? (y - source.y) / (source.height - height) : 0
+        let clamp = { (value: Double) in min(1, max(0, value)) }
+        return Rect(
+            x: target.x + clamp(fx) * (target.width - w),
+            y: target.y + clamp(fy) * (target.height - h),
+            width: w,
+            height: h
+        )
+    }
+
     public func isClose(to other: Rect, tolerance: Double = 1.5) -> Bool {
         abs(x - other.x) <= tolerance && abs(y - other.y) <= tolerance
             && abs(width - other.width) <= tolerance && abs(height - other.height) <= tolerance

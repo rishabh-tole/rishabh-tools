@@ -1,6 +1,6 @@
 public struct KeyCombo: Hashable {
     /// Key name: "a"..."z", "0"..."9", "minus", "equal", "slash", "comma", "semicolon",
-    /// "tab", "escape", "backspace".
+    /// "leftbracket", "rightbracket", "tab", "escape", "backspace".
     public let key: String
     public let option: Bool
     public let shift: Bool
@@ -62,6 +62,10 @@ public enum Keymap {
             Binding(KeyCombo("f", shift: true), .command(.toggleFloat)),
             Binding(KeyCombo("tab"), .command(.workspaceBackAndForth)),
             Binding(KeyCombo("tab", shift: true), .command(.moveWorkspaceToNextMonitor)),
+            Binding(KeyCombo("leftbracket"), .command(.focusMonitor(.left))),
+            Binding(KeyCombo("rightbracket"), .command(.focusMonitor(.right))),
+            Binding(KeyCombo("leftbracket", shift: true), .command(.moveToMonitor(.left))),
+            Binding(KeyCombo("rightbracket", shift: true), .command(.moveToMonitor(.right))),
             Binding(KeyCombo("semicolon", shift: true), .enterServiceMode),
         ]
         return focus + move + workspaces + misc

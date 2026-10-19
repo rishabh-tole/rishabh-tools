@@ -5,17 +5,35 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 LABEL=com.rishabh.rishabhwm
+DOMAIN="gui/$(id -u)"
 APP_DIR="$HOME/Applications"
 APP="$APP_DIR/rishabhwm.app"
 AGENT="$HOME/Library/LaunchAgents/$LABEL.plist"
 LOG="$HOME/Library/Logs/rishabhwm.log"
 
-./scripts/build-app.sh
+requirement() { codesign -dr - "$1" 2>/dev/null | sed -n 's/^#* *designated => //p'; }
 
-launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
+./scripts/build-app.sh
+OLD_REQ=$( [ -d "$APP" ] && requirement "$APP" || true )
+NEW_REQ=$(requirement build/rishabhwm.app)
+
+# bootout returns before the job is gone; bootstrapping too early fails with "Input/output error".
+launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null || true
+for _ in $(seq 50); do
+    launchctl print "$DOMAIN/$LABEL" >/dev/null 2>&1 || break
+    sleep 0.1
+done
+
 mkdir -p "$APP_DIR" "$(dirname "$AGENT")"
 rm -rf "$APP"
 cp -R build/rishabhwm.app "$APP"
+
+# A grant made for a different signature no longer applies but still shows as "on" in
+# System Settings. Clear it so macOS asks again instead of failing silently.
+if [ -n "$OLD_REQ" ] && [ "$OLD_REQ" != "$NEW_REQ" ]; then
+    tccutil reset Accessibility "$LABEL" >/dev/null 2>&1 || true
+    echo "signature changed: grant Accessibility to rishabhwm again (one time)"
+fi
 
 cat > "$AGENT" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -45,6 +63,10 @@ cat > "$AGENT" <<PLIST
 </plist>
 PLIST
 
-launchctl bootstrap "gui/$(id -u)" "$AGENT"
+for attempt in 1 2 3 4 5; do
+    launchctl bootstrap "$DOMAIN" "$AGENT" 2>/dev/null && break
+    [ "$attempt" = 5 ] && { echo "launchctl bootstrap failed; try: launchctl bootstrap $DOMAIN $AGENT" >&2; exit 1; }
+    sleep 0.5
+done
 echo "installed $APP and started it (log: $LOG)"
 echo "first run: allow rishabhwm in System Settings → Privacy & Security → Accessibility"

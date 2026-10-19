@@ -28,6 +28,12 @@ enum ConfigStore {
     inner-gap = 0
     outer-gap = 0
     accordion-padding = 30
+
+    [behavior]
+    focus-wrap = true # ⌥hjkl past the last window wraps around
+
+    # Workspaces pinned to a display: main, secondary, builtin (laptop) or external.
+    [monitors]
     """
 
     static func load() -> Result<Config, ConfigError> {
@@ -38,6 +44,17 @@ enum ConfigStore {
             return .failure(ConfigError(line: 0, message: "cannot read \(url.path)"))
         }
         return ConfigParser.parse(text)
+    }
+
+    static func save(_ config: Config) -> Result<Void, ConfigError> {
+        do {
+            try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try ConfigWriter.render(config).write(to: url, atomically: true, encoding: .utf8)
+            return .success(())
+        } catch {
+            Log.error("could not write config: \(error)")
+            return .failure(ConfigError(line: 0, message: "cannot write \(url.path)"))
+        }
     }
 
     private static func writeDefault() {

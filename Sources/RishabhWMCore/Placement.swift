@@ -7,15 +7,16 @@ public enum Placement: Equatable {
 }
 
 extension World {
-    /// Frames of tiled windows on visible workspaces (⌥F fullscreen windows cover the monitor).
+    /// Frames of tiled windows on visible workspaces. An ⌥F fullscreen window covers the monitor and
+    /// steps out of the tiling, so the remaining windows share the screen underneath it.
     public func tiledRects(settings: LayoutSettings) -> [WindowID: Rect] {
         monitors.reduce(into: [WindowID: Rect]()) { result, monitor in
             let workspace = self.workspace(monitor.workspace)
-            let rects = TreeLayout.windowRects(workspace.root, in: monitor.frame, settings: settings)
+            let full = workspace.fullscreen.flatMap { workspace.isTiled($0) ? $0 : nil }
+            let tree = full.map { workspace.root.removingWindow($0) } ?? workspace.root
+            let rects = TreeLayout.windowRects(tree, in: monitor.frame, settings: settings)
             result.merge(rects) { _, new in new }
-            if let full = workspace.fullscreen, workspace.isTiled(full) {
-                result[full] = monitor.frame
-            }
+            if let full { result[full] = monitor.frame }
         }
     }
 

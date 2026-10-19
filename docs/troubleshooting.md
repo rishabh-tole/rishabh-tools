@@ -6,7 +6,7 @@ rishabhwm doesn't have Accessibility permission. Open System Settings → Privac
 
 ## It stopped working after I reinstalled
 
-The app is ad-hoc signed, so every new build looks like a different app to macOS, and the old permission entry stops matching. Remove rishabhwm from the Accessibility list, then add it back (or turn it off and on).
+Builds are signed with a local self-signed certificate (`rishabhwm local signing` in your login keychain, created by `scripts/signing-identity.sh` on first build), so the permission survives rebuilds. If the certificate is ever deleted or recreated, the signature changes: `install.sh` notices, clears the stale entry, and macOS asks for permission again once. If it still shows as on but nothing works, remove rishabhwm from the Accessibility list and add it back.
 
 ## A window disappeared
 

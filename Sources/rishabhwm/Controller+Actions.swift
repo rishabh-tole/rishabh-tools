@@ -38,11 +38,26 @@ extension Controller {
         if onHome { syncFocusFromSystem() }
         let before = world
         world = world.applying(command, settings: config.layout)
+        carryFloatingAcrossDisplays(from: before)
         applyLayout()
         let focusMoved = before.focused != world.focused || before.focusedMonitor != world.focusedMonitor
         if !onHome || focusMoved || command == .fullscreen {
             applyFocus()
         }
+    }
+
+    /// Floating windows aren't laid out, so a floating window sent to another display is moved
+    /// there by hand, keeping its relative spot.
+    private func carryFloatingAcrossDisplays(from before: World) {
+        guard let id = world.focused, let window = windows[id],
+              let name = world.workspaceName(of: id), world.workspace(name).isFloating(id),
+              let oldName = before.workspaceName(of: id),
+              let from = before.monitorIndex(showing: oldName), let to = world.monitorIndex(showing: name),
+              before.monitors[from].id != world.monitors[to].id,
+              let frame = AX.frame(window.element)
+        else { return }
+        let target = frame.moved(from: before.monitors[from].frame, to: world.monitors[to].frame).rounded
+        AX.setFrame(window.element, app: appElement(window.pid), target)
     }
 
     private func closeAllButCurrent() {
@@ -53,17 +68,21 @@ extension Controller {
             .forEach { AX.close($0.element) }
     }
 
-    func reloadConfig() {
+    @discardableResult
+    func reloadConfig() -> Result<Void, ConfigError> {
         switch ConfigStore.load() {
         case .success(let loaded):
             config = loaded
+            world = world.with(assignments: loaded.monitorAssignments)
             statusBar.showError(nil)
             applied.removeAll()
             scheduleLayout()
             Log.info("config loaded: \(loaded.appWorkspaces.count) app rule(s)")
+            return .success(())
         case .failure(let error):
             statusBar.showError(error.description)
             Log.error(error.description)
+            return .failure(error)
         }
     }
 

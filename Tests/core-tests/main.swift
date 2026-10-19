@@ -1,5 +1,6 @@
 treeTests()
 layoutTests()
 worldTests()
+focusTests()
 configTests()
 Harness.shared.finish()

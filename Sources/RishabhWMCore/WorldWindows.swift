@@ -21,7 +21,7 @@ extension World {
     public func focusingWindow(_ id: WindowID) -> World {
         guard let name = workspaceName(of: id) else { return self }
         let current = focusedWorkspaceName
-        let shown = isVisible(name) ? self : showing(name, onMonitor: focusedMonitor)
+        let shown = isVisible(name) ? self : showing(name, onMonitor: homeMonitor(for: name))
         guard let monitor = shown.monitorIndex(showing: name) else { return self }
         let previous = name == current ? previousWorkspace : current
         return shown
@@ -45,7 +45,15 @@ extension World {
                 ?? names[0]
             result.append(free)
         }
-        let newMonitors = screens.indices.map { Monitor(id: screens[$0].id, frame: screens[$0].frame, workspace: assigned[$0]) }
+        let newMonitors = screens.indices.map { index in
+            Monitor(
+                id: screens[index].id,
+                frame: screens[index].frame,
+                workspace: assigned[index],
+                isMain: screens[index].isMain,
+                isBuiltin: screens[index].isBuiltin
+            )
+        }
         let focusedID = monitors.indices.contains(focusedMonitor) ? monitors[focusedMonitor].id : nil
         let newFocus = newMonitors.firstIndex { $0.id == focusedID } ?? 0
         let world = with(monitors: newMonitors, focusedMonitor: newFocus)

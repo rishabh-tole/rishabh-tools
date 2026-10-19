@@ -29,7 +29,16 @@ If the file has a mistake, the old config stays active. The menu bar menu then s
 inner-gap = 0          # points between tiled windows
 outer-gap = 0          # points between windows and the screen edge
 accordion-padding = 30 # how much of the neighbors an accordion shows
+
+[behavior]
+focus-wrap = true      # ⌥hjkl past the last window wraps around
+
+# Workspaces pinned to a display.
+[monitors]
+"C" = "builtin"
 ```
+
+Easier: menu bar item → **Settings…** edits all of this in a small window and saves it to the file. Saving rewrites the file, so hand-written comments are dropped.
 
 ## `[apps]`: app routing
 
@@ -58,6 +67,23 @@ Dialogs, sheets, panels and other non-standard windows are always left alone, wh
 | `accordion-padding` | `30` | How much of each neighbor stays visible in accordion layout |
 
 All values must be numbers `>= 0`.
+
+## `[behavior]`
+
+| Key | Default | Meaning |
+|---|---|---|
+| `focus-wrap` | `true` | `⌥hjkl` at the last window (and last display) wraps around to the opposite edge |
+
+## `[monitors]`: pinned workspaces
+
+`"<workspace>" = "<display>"`. When you switch to that workspace (or one of its windows takes focus) it opens on that display instead of the focused one. If no such display is connected, it opens on the focused one as usual.
+
+| Display | Meaning |
+|---|---|
+| `main` | The display with the menu bar (System Settings → Displays → Use as Main display) |
+| `secondary` | Any display that isn't the main one |
+| `builtin` | The laptop's own screen |
+| `external` | Any display that isn't the laptop screen |
 
 ## Not configurable (yet)
 

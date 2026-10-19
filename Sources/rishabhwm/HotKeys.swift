@@ -83,6 +83,7 @@ enum KeyCodes {
         "5": kVK_ANSI_5, "6": kVK_ANSI_6, "7": kVK_ANSI_7, "8": kVK_ANSI_8, "9": kVK_ANSI_9,
         "minus": kVK_ANSI_Minus, "equal": kVK_ANSI_Equal, "slash": kVK_ANSI_Slash,
         "comma": kVK_ANSI_Comma, "semicolon": kVK_ANSI_Semicolon,
+        "leftbracket": kVK_ANSI_LeftBracket, "rightbracket": kVK_ANSI_RightBracket,
         "tab": kVK_Tab, "escape": kVK_Escape, "backspace": kVK_Delete,
     ]
 

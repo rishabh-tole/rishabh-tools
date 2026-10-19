@@ -24,6 +24,27 @@ public enum Navigation {
             .0
     }
 
+    /// The window right at the edge you enter from when moving in `direction` (leftmost when moving
+    /// right, ...), ties broken by closeness to `origin` across the other axis.
+    public static func edgeWindow(_ candidates: [WindowID], enteringFrom direction: Direction, near origin: Rect?, rects: [WindowID: Rect]) -> WindowID? {
+        let edge: (Rect) -> Double = {
+            switch direction {
+            case .right: return $0.minX
+            case .left: return -$0.maxX
+            case .down: return $0.minY
+            case .up: return -$0.maxY
+            }
+        }
+        let cross: (Rect) -> Double = { rect in
+            guard let origin else { return 0 }
+            return direction.orientation == .horizontal ? abs(rect.midY - origin.midY) : abs(rect.midX - origin.midX)
+        }
+        return candidates
+            .compactMap { id in rects[id].map { (id, edge($0), cross($0)) } }
+            .min { ($0.1, $0.2) < ($1.1, $1.2) }?
+            .0
+    }
+
     /// Index of the nearest frame lying beyond `origin` in `direction`.
     public static func nearest(_ direction: Direction, from origin: Rect, among frames: [Rect]) -> Int? {
         frames.indices

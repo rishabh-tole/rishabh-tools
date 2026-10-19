@@ -12,6 +12,10 @@ public enum Command: Equatable {
     case moveToWorkspace(String)
     case workspaceBackAndForth
     case moveWorkspaceToNextMonitor
+    /// Focus the display in that direction (wraps around).
+    case focusMonitor(Direction)
+    /// Send the focused window to the display in that direction (wraps around); focus follows it.
+    case moveToMonitor(Direction)
 
     /// Commands still allowed while a native-fullscreen app is in front.
     /// Everything else is ignored there, so rishabhwm never touches fullscreen apps.
@@ -39,6 +43,8 @@ extension World {
         case .moveToWorkspace(let name): return movingFocused(toWorkspace: name)
         case .workspaceBackAndForth: return previousWorkspace.map { switchingTo($0) } ?? self
         case .moveWorkspaceToNextMonitor: return movingWorkspaceToNextMonitor()
+        case .focusMonitor(let direction): return focusingMonitor(direction)
+        case .moveToMonitor(let direction): return movingFocused(toMonitor: direction)
         }
     }
 
@@ -53,8 +59,9 @@ extension World {
             guard index != focusedMonitor else { return self }
             return with(focusedMonitor: index, previousWorkspace: current).with(focused: focus)
         }
-        return showing(name, onMonitor: focusedMonitor)
-            .with(previousWorkspace: current)
+        let home = homeMonitor(for: name)
+        return showing(name, onMonitor: home)
+            .with(focusedMonitor: home, previousWorkspace: current)
             .with(focused: focus)
     }
 
@@ -75,28 +82,6 @@ extension World {
             .with(focusedMonitor: next)
     }
 
-    // MARK: - Focus
-
-    func focusingDirection(_ direction: Direction, settings: LayoutSettings) -> World {
-        let name = focusedWorkspaceName
-        let workspace = self.workspace(name)
-        let rects = tiledRects(settings: settings)
-        if let id = focused, workspace.isTiled(id),
-           let target = workspace.root.neighborWindow(of: id, direction, rects: rects) {
-            return replacing(workspace.with(fullscreen: nil)).focusingWindow(target)
-        }
-        guard let index = monitorIndex(direction, from: focusedMonitor) else { return self }
-        let other = self.workspace(monitors[index].workspace)
-        let origin = focused.flatMap { rects[$0] } ?? monitors[focusedMonitor].frame
-        let pick = Navigation.closest(other.root.windows, to: origin, rects: rects) ?? other.lastFocused ?? other.windows.first
-        return with(focusedMonitor: index).with(focused: pick)
-    }
-
-    func monitorIndex(_ direction: Direction, from index: Int) -> Int? {
-        guard monitors.indices.contains(index) else { return nil }
-        return Navigation.nearest(direction, from: monitors[index].frame, among: monitors.map(\.frame))
-    }
-
     // MARK: - Tree edits on the focused window
 
     func movingFocused(_ direction: Direction) -> World {
@@ -108,11 +93,7 @@ extension World {
         case .notFound: return self
         case .atEdge:
             guard let target = monitorIndex(direction, from: source) else { return self }
-            let destination = self.workspace(monitors[target].workspace)
-            return replacing(workspace.removing(id))
-                .replacing(destination.adding(id, floating: false).with(lastFocused: id))
-                .with(focusedMonitor: target)
-                .with(focused: id)
+            return movingWindow(id, from: name, toMonitor: target)
         }
     }
 

@@ -35,7 +35,16 @@ final class Controller {
     let ownPID = ProcessInfo.processInfo.processIdentifier
     lazy var statusBar = StatusBar(
         onReload: { [weak self] in self?.reloadConfig() },
+        onSettings: { [weak self] in self?.settingsWindow.show() },
         onQuit: { [weak self] in self?.quit() }
+    )
+
+    lazy var settingsWindow = SettingsWindow(
+        current: { [weak self] in self?.config ?? .empty },
+        onSave: { [weak self] config in
+            guard let self else { return .success(()) }
+            return ConfigStore.save(config).flatMap { self.reloadConfig() }.map { self.refresh() }
+        }
     )
 
     init() {

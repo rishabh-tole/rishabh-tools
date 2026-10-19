@@ -2,11 +2,14 @@ public struct LayoutSettings: Equatable {
     public let innerGap: Double
     public let outerGap: Double
     public let accordionPadding: Double
+    /// ⌥hjkl past the last window wraps around to the opposite edge instead of stopping.
+    public let wrapFocus: Bool
 
-    public init(innerGap: Double = 0, outerGap: Double = 0, accordionPadding: Double = 30) {
+    public init(innerGap: Double = 0, outerGap: Double = 0, accordionPadding: Double = 30, wrapFocus: Bool = true) {
         self.innerGap = innerGap
         self.outerGap = outerGap
         self.accordionPadding = accordionPadding
+        self.wrapFocus = wrapFocus
     }
 
     public static let `default` = LayoutSettings()

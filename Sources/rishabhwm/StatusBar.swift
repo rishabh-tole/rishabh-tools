@@ -6,17 +6,20 @@ final class StatusBar: NSObject {
     private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private let onReload: () -> Void
     private let onQuit: () -> Void
+    private let onSettings: () -> Void
     private let errorItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
 
-    init(onReload: @escaping () -> Void, onQuit: @escaping () -> Void) {
+    init(onReload: @escaping () -> Void, onSettings: @escaping () -> Void, onQuit: @escaping () -> Void) {
         self.onReload = onReload
+        self.onSettings = onSettings
         self.onQuit = onQuit
         super.init()
         let menu = NSMenu()
         errorItem.isHidden = true
         menu.addItem(errorItem)
+        menu.addItem(withTitle: "Settings…", action: #selector(settings), keyEquivalent: ",").target = self
         menu.addItem(withTitle: "Reload Config", action: #selector(reload), keyEquivalent: "r").target = self
-        menu.addItem(withTitle: "Edit Config…", action: #selector(editConfig), keyEquivalent: ",").target = self
+        menu.addItem(withTitle: "Edit Config…", action: #selector(editConfig), keyEquivalent: "").target = self
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit rishabhwm", action: #selector(quit), keyEquivalent: "q").target = self
         item.menu = menu
@@ -39,6 +42,7 @@ final class StatusBar: NSObject {
     }
 
     @objc private func reload() { onReload() }
+    @objc private func settings() { onSettings() }
     @objc private func quit() { onQuit() }
     @objc private func editConfig() { NSWorkspace.shared.open(ConfigStore.url) }
 }

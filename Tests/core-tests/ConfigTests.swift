@@ -34,6 +34,24 @@ func configTests() {
         if case .success = ConfigParser.parse("hello") { expect(false, "no section") }
     }
 
+    test("parses behavior and monitors") {
+        let text = "[behavior]\nfocus-wrap = false\n[monitors]\n\"c\" = \"Builtin\"\n\"1\" = \"main\""
+        guard case .success(let config) = ConfigParser.parse(text) else { return expect(false, "should parse") }
+        expectEqual(config.layout.wrapFocus, false)
+        expectEqual(config.monitorAssignments, ["C": .builtin, "1": .main])
+        if case .success = ConfigParser.parse("[monitors]\n\"C\" = \"left\"") { expect(false, "bad role") }
+    }
+
+    test("writer round-trips through the parser") {
+        let config = Config(
+            appWorkspaces: ["com.google.Chrome": "B", "net.kovidgoyal.kitty": "T"],
+            floatingApps: ["com.docker.docker"],
+            layout: LayoutSettings(innerGap: 8, outerGap: 4.5, accordionPadding: 30, wrapFocus: false),
+            monitorAssignments: ["C": .main]
+        )
+        expectEqual(ConfigParser.parse(ConfigWriter.render(config)), .success(config))
+    }
+
     test("keymap has AeroSpace bindings and no conflicts") {
         let combos = Keymap.main.map(\.combo)
         expectEqual(Set(combos).count, combos.count)

@@ -83,9 +83,11 @@ Sources/RishabhWMCore/       pure Swift, no AppKit, immutable values
   World.swift                all workspaces + monitors
   WorldWindows.swift         window add/remove/focus, monitor changes
   Command.swift              hotkey commands as World -> World
+  WorldFocus.swift           directional focus, wrapping, display-to-display commands
   Placement.swift            World -> tiled / floating / hidden per window
   Keymap.swift               AeroSpace default bindings
   Config.swift               TOML-subset parser
+  ConfigWriter.swift         Config -> TOML (settings window)
 
 Sources/rishabhwm/           macOS integration
   main.swift                 app delegate, permission wait, signal handling
@@ -97,6 +99,8 @@ Sources/rishabhwm/           macOS integration
   Anchors.swift              invisible home-desktop windows
   Screens.swift              displays, coordinate conversion, parking spots
   StatusBar.swift            menu bar item
+  SettingsWindow.swift       SwiftUI settings window
+  SettingsModel.swift        editable config behind it
   ConfigStore.swift          config file location and defaults
 
 Tests/core-tests/            unit tests for RishabhWMCore
@@ -105,7 +109,7 @@ scripts/                     build, install, uninstall, test
 
 ## Lifecycle
 
-- `scripts/install.sh` builds `~/Applications/rishabhwm.app`, ad-hoc signed, as a menu-bar-only app. It also installs the LaunchAgent `com.rishabh.rishabhwm` with `RunAtLoad` and `KeepAlive { SuccessfulExit = false }`:
+- `scripts/install.sh` builds `~/Applications/rishabhwm.app`, signed with a stable local certificate, as a menu-bar-only app. It also installs the LaunchAgent `com.rishabh.rishabhwm` with `RunAtLoad` and `KeepAlive { SuccessfulExit = false }`:
   - rishabhwm starts at login.
   - It restarts after a crash.
   - Quitting from the menu (a clean exit) keeps it off until next login.
