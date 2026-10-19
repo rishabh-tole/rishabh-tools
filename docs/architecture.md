@@ -69,6 +69,16 @@ Nothing polls. Everything is driven by events:
 
 Frames are only set when they differ from the last frame rishabhwm applied. Tiled windows dragged or resized by hand snap back once the mouse is released.
 
+## Applying a layout fast
+
+Every Accessibility call is a blocking round trip to the window's app, so `WindowMover` keeps them off the main thread:
+
+- **One serial queue per app.** Apps move their windows in parallel. A slow or hung app only delays itself, never the other apps or the next hotkey.
+- **Latest move wins.** A window's queued move is dropped if a newer one for the same window arrives first, so mashing workspace keys only applies the final layout.
+- **Position-only moves.** Parking and unparking never change a window's size, so they set the position alone: one call instead of four, and the app doesn't re-layout or redraw.
+- **Show before hide.** The focused window moves in first, then the rest of the new workspace, and the old workspace is parked last, so a switch never flashes an empty desktop.
+- **No echo.** The moved/resized notifications our own moves trigger are ignored for 0.5s instead of each scheduling a snap-back check.
+
 ## Code map
 
 ```
@@ -93,6 +103,7 @@ Sources/rishabhwm/           macOS integration
   main.swift                 app delegate, permission wait, signal handling
   Controller*.swift          event handling, applying layout, hotkey actions
   AX.swift                   Accessibility wrappers
+  WindowMover.swift          per-app background queues for AX window moves
   AppObserver.swift          AXObserver per app
   SkyLight.swift             Space detection, window focus across Spaces
   HotKeys.swift              Carbon hotkeys

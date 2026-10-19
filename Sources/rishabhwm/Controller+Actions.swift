@@ -57,7 +57,7 @@ extension Controller {
               let frame = AX.frame(window.element)
         else { return }
         let target = frame.moved(from: before.monitors[from].frame, to: world.monitors[to].frame).rounded
-        AX.setFrame(window.element, app: appElement(window.pid), target)
+        setFrame(window, target, from: frame)
     }
 
     private func closeAllButCurrent() {

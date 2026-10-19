@@ -21,7 +21,10 @@ final class Controller {
     var observers: [pid_t: AppObserver] = [:]
     /// Last frame we set for each tiled window, to skip redundant AX calls.
     var applied: [WindowID: Rect] = [:]
-    var parked: Set<WindowID> = []
+    /// Windows parked off-screen, with the frame they had before.
+    var parked: [WindowID: Rect] = [:]
+    /// Our own moves echo back as moved/resized notifications; those are ignored until this time.
+    var ignoreGeometryUntil: [WindowID: Date] = [:]
     var floatingFrames: [WindowID: Rect] = [:]
     var lastSnap: [WindowID: Date] = [:]
     var serviceMode = false
@@ -32,6 +35,7 @@ final class Controller {
     var started = false
 
     let anchors = Anchors()
+    let mover = WindowMover()
     let ownPID = ProcessInfo.processInfo.processIdentifier
     lazy var statusBar = StatusBar(
         onReload: { [weak self] in self?.reloadConfig() },
@@ -109,6 +113,7 @@ final class Controller {
     private func removeApp(_ pid: pid_t) {
         windows.values.filter { $0.pid == pid }.forEach { forget($0.id, refocus: true) }
         observers[pid] = nil
+        mover.removeApp(pid)
     }
 
     // MARK: - Window events
@@ -171,13 +176,14 @@ final class Controller {
             forget(id, refocus: false)
             return
         }
-        guard applied[id] != nil, !parked.contains(id) else { return }
+        if let until = ignoreGeometryUntil[id], Date() < until { return }
+        guard applied[id] != nil, parked[id] == nil else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in self?.snapBack(id) }
     }
 
     /// Tiled windows dragged or resized by hand snap back once the mouse is released.
     private func snapBack(_ id: WindowID) {
-        guard let window = windows[id], let target = applied[id], !parked.contains(id) else { return }
+        guard let window = windows[id], let target = applied[id], parked[id] == nil else { return }
         if NSEvent.pressedMouseButtons != 0 {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in self?.snapBack(id) }
             return
@@ -186,7 +192,7 @@ final class Controller {
         // Windows with a minimum size can't take the frame; don't fight them in a loop.
         if let last = lastSnap[id], Date().timeIntervalSince(last) < 1 { return }
         lastSnap[id] = Date()
-        AX.setFrame(window.element, app: appElement(window.pid), target)
+        setFrame(window, target, from: actual)
     }
 
     // MARK: - Tracking
@@ -215,7 +221,9 @@ final class Controller {
         observers[window.pid]?.unwatch(id)
         windows[id] = nil
         applied[id] = nil
-        parked.remove(id)
+        parked[id] = nil
+        ignoreGeometryUntil[id] = nil
+        mover.cancel(id)
         floatingFrames[id] = nil
         lastSnap[id] = nil
         let wasFocused = world.focused == id
