@@ -1,0 +1,5 @@
+catalogTests()
+wheelTests()
+namingTests()
+textTests()
+Harness.shared.finish()
